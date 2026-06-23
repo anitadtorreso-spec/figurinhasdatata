@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
   component: CatalogPage,
 });
 
-type Team = { id: string; code: string; name: string; flag: string; sort_order: number };
+type Team = { id: string; code: string; name: string; flag: string; sort_order: number; group_label: string | null };
 type Sticker = { id: string; team_id: string; number: number; price_cents: number; stock: number };
 
 function CatalogPage() {
@@ -148,46 +148,67 @@ function CatalogPage() {
               </label>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {filteredTeams.length === 0 && (
-                <div className="col-span-full rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
-                  Nenhuma seleção encontrada.
-                </div>
-              )}
-              {filteredTeams.map((team) => {
-                const stats = teamStats.get(team.id) ?? { available: 0, units: 0, total: 0 };
-                const teamCartQty = (stickersByTeam.get(team.id) ?? []).reduce((sum, s) => sum + (cart[s.id] ?? 0), 0);
-                const out = stats.available === 0;
+            {filteredTeams.length === 0 ? (
+              <div className="mt-6 rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
+                Nenhuma seleção encontrada.
+              </div>
+            ) : (
+              (() => {
+                const groups: { label: string; teams: Team[] }[] = [];
+                for (const t of filteredTeams) {
+                  const label = t.group_label ?? "OUTRAS";
+                  let g = groups.find((x) => x.label === label);
+                  if (!g) { g = { label, teams: [] }; groups.push(g); }
+                  g.teams.push(t);
+                }
                 return (
-                  <button
-                    key={team.id}
-                    type="button"
-                    onClick={() => setSelectedTeamId(team.id)}
-                    className={
-                      "group relative flex items-center gap-3 rounded-xl border bg-card p-4 text-left transition hover:border-primary/60 hover:shadow-card " +
-                      (out ? "opacity-70" : "")
-                    }
-                  >
-                    <span className="text-3xl">{team.flag}</span>
-                    <div className="min-w-0 flex-1">
-                      <div style={{ fontFamily: "var(--font-display)" }} className="truncate text-lg leading-tight tracking-wide">
-                        {team.name}
-                      </div>
-                      <div className="mt-0.5 text-[11px] uppercase tracking-widest text-muted-foreground">{team.code}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {out ? "sem estoque" : `${stats.available}/${stats.total} disponíveis`}
-                      </div>
-                    </div>
-                    {teamCartQty > 0 && (
-                      <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
-                        {teamCartQty}
-                      </span>
-                    )}
-                    <ChevronRight className="h-4 w-4 text-muted-foreground transition group-hover:text-primary" />
-                  </button>
+                  <div className="mt-6 space-y-8">
+                    {groups.map((g) => (
+                      <section key={g.label}>
+                        <h3 style={{ fontFamily: "var(--font-display)" }} className="mb-3 text-sm uppercase tracking-[0.25em] text-muted-foreground">
+                          {g.label}
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                          {g.teams.map((team) => {
+                            const stats = teamStats.get(team.id) ?? { available: 0, units: 0, total: 0 };
+                            const teamCartQty = (stickersByTeam.get(team.id) ?? []).reduce((sum, s) => sum + (cart[s.id] ?? 0), 0);
+                            const out = stats.available === 0;
+                            return (
+                              <button
+                                key={team.id}
+                                type="button"
+                                onClick={() => setSelectedTeamId(team.id)}
+                                className={
+                                  "group relative flex items-center gap-3 rounded-xl border bg-card p-4 text-left transition hover:border-primary/60 hover:shadow-card " +
+                                  (out ? "opacity-70" : "")
+                                }
+                              >
+                                <span className="text-3xl">{team.flag}</span>
+                                <div className="min-w-0 flex-1">
+                                  <div style={{ fontFamily: "var(--font-display)" }} className="truncate text-lg leading-tight tracking-wide">
+                                    {team.name}
+                                  </div>
+                                  <div className="mt-0.5 text-[11px] uppercase tracking-widest text-muted-foreground">{team.code}</div>
+                                  <div className="mt-1 text-xs text-muted-foreground">
+                                    {out ? "sem estoque" : `${stats.available}/${stats.total} disponíveis`}
+                                  </div>
+                                </div>
+                                {teamCartQty > 0 && (
+                                  <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+                                    {teamCartQty}
+                                  </span>
+                                )}
+                                <ChevronRight className="h-4 w-4 text-muted-foreground transition group-hover:text-primary" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
                 );
-              })}
-            </div>
+              })()
+            )}
           </>
         ) : (
           <>

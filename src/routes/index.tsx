@@ -48,6 +48,7 @@ function CatalogPage() {
   const [query, setQuery] = useState("");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [open, setOpen] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
   const stickersByTeam = useMemo(() => {
     const m = new Map<string, Sticker[]>();
@@ -59,17 +60,25 @@ function CatalogPage() {
     return m;
   }, [stickers]);
 
+  const teamStats = useMemo(() => {
+    const m = new Map<string, { available: number; units: number; total: number }>();
+    for (const t of teams) {
+      const list = stickersByTeam.get(t.id) ?? [];
+      const available = list.filter((s) => s.stock > 0).length;
+      const units = list.reduce((sum, s) => sum + Math.max(0, s.stock), 0);
+      m.set(t.id, { available, units, total: list.length });
+    }
+    return m;
+  }, [teams, stickersByTeam]);
+
   const filteredTeams = useMemo(() => {
     const q = query.trim().toLowerCase();
     return teams.filter((t) => {
       if (q && !(t.name.toLowerCase().includes(q) || t.code.toLowerCase().includes(q))) return false;
-      if (onlyAvailable) {
-        const has = (stickersByTeam.get(t.id) ?? []).some((s) => s.stock > 0);
-        if (!has) return false;
-      }
+      if (onlyAvailable && (teamStats.get(t.id)?.available ?? 0) === 0) return false;
       return true;
     });
-  }, [teams, query, onlyAvailable, stickersByTeam]);
+  }, [teams, query, onlyAvailable, teamStats]);
 
   const cartItems = useMemo(() => {
     return Object.entries(cart)
@@ -93,6 +102,10 @@ function CatalogPage() {
     });
   }
 
+  const selectedTeam = selectedTeamId ? teams.find((t) => t.id === selectedTeamId) : null;
+  const selectedStickers = selectedTeamId ? stickersByTeam.get(selectedTeamId) ?? [] : [];
+  const selectedCartQty = selectedStickers.reduce((sum, s) => sum + (cart[s.id] ?? 0), 0);
+
   return (
     <div className="min-h-screen">
       <SiteHeader>
@@ -113,96 +126,145 @@ function CatalogPage() {
       </SiteHeader>
 
       <main className="mx-auto max-w-6xl px-4 pb-32 pt-6">
-        <section className="rounded-2xl border bg-card p-6 shadow-card">
-          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-4xl tracking-wide sm:text-5xl">
-            Complete seu álbum 🏆
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Marque os números das figurinhas que faltam. Quando terminar, abra <strong>Meu pedido</strong>, preencha seus dados e envie. A gente confirma a disponibilidade em seguida.
-          </p>
-        </section>
+        {!selectedTeam ? (
+          <>
+            <section className="rounded-2xl border bg-card p-6 shadow-card">
+              <h1 style={{ fontFamily: "var(--font-display)" }} className="text-4xl tracking-wide sm:text-5xl">
+                Complete seu álbum 🏆
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                Toque em uma seleção para ver as figurinhas disponíveis em estoque. Marque as que faltam no seu álbum e envie o pedido em <strong>Meu pedido</strong>.
+              </p>
+            </section>
 
-        <div className="sticky top-[64px] z-20 mt-6 flex flex-wrap items-center gap-3 rounded-xl border bg-background/90 p-3 shadow-sm backdrop-blur">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar seleção (ex: Brasil, BRA)" value={query} onChange={(e) => setQuery(e.target.value)} className="pl-9" />
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={onlyAvailable} onChange={(e) => setOnlyAvailable(e.target.checked)} className="h-4 w-4 accent-[var(--color-primary)]" />
-            Só com estoque
-          </label>
-        </div>
-
-        <div className="mt-6 space-y-8">
-          {filteredTeams.length === 0 && (
-            <div className="rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
-              Nenhuma seleção encontrada.
+            <div className="sticky top-[64px] z-20 mt-6 flex flex-wrap items-center gap-3 rounded-xl border bg-background/90 p-3 shadow-sm backdrop-blur">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Buscar seleção (ex: Brasil, BRA)" value={query} onChange={(e) => setQuery(e.target.value)} className="pl-9" />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={onlyAvailable} onChange={(e) => setOnlyAvailable(e.target.checked)} className="h-4 w-4 accent-[var(--color-primary)]" />
+                Só com estoque
+              </label>
             </div>
-          )}
-          {filteredTeams.map((team) => {
-            const list = stickersByTeam.get(team.id) ?? [];
-            return (
-              <section key={team.id}>
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="text-3xl">{team.flag}</span>
-                  <div>
-                    <h2 style={{ fontFamily: "var(--font-display)" }} className="text-2xl tracking-wide">
-                      {team.name}
-                    </h2>
-                    <div className="text-xs uppercase tracking-widest text-muted-foreground">{team.code}</div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {filteredTeams.length === 0 && (
+                <div className="col-span-full rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
+                  Nenhuma seleção encontrada.
+                </div>
+              )}
+              {filteredTeams.map((team) => {
+                const stats = teamStats.get(team.id) ?? { available: 0, units: 0, total: 0 };
+                const teamCartQty = (stickersByTeam.get(team.id) ?? []).reduce((sum, s) => sum + (cart[s.id] ?? 0), 0);
+                const out = stats.available === 0;
+                return (
+                  <button
+                    key={team.id}
+                    type="button"
+                    onClick={() => setSelectedTeamId(team.id)}
+                    className={
+                      "group relative flex items-center gap-3 rounded-xl border bg-card p-4 text-left transition hover:border-primary/60 hover:shadow-card " +
+                      (out ? "opacity-70" : "")
+                    }
+                  >
+                    <span className="text-3xl">{team.flag}</span>
+                    <div className="min-w-0 flex-1">
+                      <div style={{ fontFamily: "var(--font-display)" }} className="truncate text-lg leading-tight tracking-wide">
+                        {team.name}
+                      </div>
+                      <div className="mt-0.5 text-[11px] uppercase tracking-widest text-muted-foreground">{team.code}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {out ? "sem estoque" : `${stats.available}/${stats.total} disponíveis`}
+                      </div>
+                    </div>
+                    {teamCartQty > 0 && (
+                      <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+                        {teamCartQty}
+                      </span>
+                    )}
+                    <ChevronRight className="h-4 w-4 text-muted-foreground transition group-hover:text-primary" />
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => setSelectedTeamId(null)}
+              className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" /> Voltar para as seleções
+            </button>
+            <section className="rounded-2xl border bg-card p-5 shadow-card">
+              <div className="flex items-center gap-4">
+                <span className="text-5xl">{selectedTeam.flag}</span>
+                <div className="min-w-0">
+                  <h2 style={{ fontFamily: "var(--font-display)" }} className="text-3xl tracking-wide">
+                    {selectedTeam.name}
+                  </h2>
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground">{selectedTeam.code}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {(teamStats.get(selectedTeam.id)?.available ?? 0)}/{(teamStats.get(selectedTeam.id)?.total ?? 0)} disponíveis
+                    {selectedCartQty > 0 && <> · {selectedCartQty} no pedido</>}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10">
-                  {list.map((s) => {
-                    const qty = cart[s.id] ?? 0;
-                    const out = s.stock <= 0;
-                    return (
-                      <div
-                        key={s.id}
-                        role="button"
-                        tabIndex={out ? -1 : 0}
-                        aria-disabled={out}
-                        onClick={() => !out && changeQty(s.id, 1, s.stock)}
-                        onKeyDown={(e) => { if (!out && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); changeQty(s.id, 1, s.stock); } }}
-                        className={
-                          "group relative aspect-[3/4] overflow-hidden rounded-lg border text-left transition select-none " +
-                          (out
-                            ? "cursor-not-allowed border-dashed bg-muted text-muted-foreground"
-                            : qty > 0
-                            ? "cursor-pointer border-primary bg-primary text-primary-foreground shadow-card"
-                            : "cursor-pointer border-border bg-card hover:border-primary/60 hover:shadow-card")
-                        }
-                      >
-                        <div className="flex h-full flex-col justify-between p-2">
-                          <div className="flex items-start justify-between">
-                            <span className="text-[10px] font-semibold uppercase tracking-widest opacity-70">{team.code}</span>
-                            {qty > 0 && <Check className="h-3.5 w-3.5" />}
-                          </div>
-                          <div style={{ fontFamily: "var(--font-display)" }} className="text-3xl leading-none">{String(s.number).padStart(2, "0")}</div>
-                          <div className="flex items-end justify-between text-[10px]">
-                            <span className="opacity-70">{formatBRL(s.price_cents)}</span>
-                            <span className="opacity-70">{out ? "esgotada" : `${s.stock} un`}</span>
-                          </div>
-                        </div>
-                        {qty > 0 && (
-                          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-background/95 px-1 py-0.5 text-foreground" onClick={(e) => e.stopPropagation()}>
-                            <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, -1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
-                              <Minus className="h-3 w-3" />
-                            </button>
-                            <span className="text-xs font-bold">{qty}</span>
-                            <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, 1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
-                              <Plus className="h-3 w-3" />
-                            </button>
-                          </div>
-                        )}
+              </div>
+            </section>
+
+            <p className="mt-4 text-xs text-muted-foreground">Toque em uma figurinha para adicionar ao pedido.</p>
+
+            <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10">
+              {selectedStickers.map((s) => {
+                const qty = cart[s.id] ?? 0;
+                const out = s.stock <= 0;
+                return (
+                  <div
+                    key={s.id}
+                    role="button"
+                    tabIndex={out ? -1 : 0}
+                    aria-disabled={out}
+                    onClick={() => !out && changeQty(s.id, 1, s.stock)}
+                    onKeyDown={(e) => { if (!out && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); changeQty(s.id, 1, s.stock); } }}
+                    className={
+                      "group relative aspect-[3/4] overflow-hidden rounded-lg border text-left transition select-none " +
+                      (out
+                        ? "cursor-not-allowed border-dashed bg-muted text-muted-foreground"
+                        : qty > 0
+                        ? "cursor-pointer border-primary bg-primary text-primary-foreground shadow-card"
+                        : "cursor-pointer border-border bg-card hover:border-primary/60 hover:shadow-card")
+                    }
+                  >
+                    <div className="flex h-full flex-col justify-between p-2">
+                      <div className="flex items-start justify-between">
+                        <span className="text-[10px] font-semibold uppercase tracking-widest opacity-70">{selectedTeam.code}</span>
+                        {qty > 0 && <Check className="h-3.5 w-3.5" />}
                       </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+                      <div style={{ fontFamily: "var(--font-display)" }} className="text-3xl leading-none">{String(s.number).padStart(2, "0")}</div>
+                      <div className="flex items-end justify-between text-[10px]">
+                        <span className="opacity-70">{formatBRL(s.price_cents)}</span>
+                        <span className="opacity-70">{out ? "esgotada" : `${s.stock} un`}</span>
+                      </div>
+                    </div>
+                    {qty > 0 && (
+                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-background/95 px-1 py-0.5 text-foreground" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, -1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="text-xs font-bold">{qty}</span>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, 1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </main>
 
       {totalQty > 0 && (

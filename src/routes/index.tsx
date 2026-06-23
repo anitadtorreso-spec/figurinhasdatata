@@ -46,7 +46,7 @@ function CatalogPage() {
 
   const [cart, setCart] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
-  const [onlyAvailable, setOnlyAvailable] = useState(true);
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [open, setOpen] = useState(false);
 
   const stickersByTeam = useMemo(() => {

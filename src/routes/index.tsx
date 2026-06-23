@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
   component: CatalogPage,
 });
 
-type Team = { id: string; code: string; name: string; flag: string; sort_order: number };
+type Team = { id: string; code: string; name: string; flag: string; sort_order: number; group_label: string | null };
 type Sticker = { id: string; team_id: string; number: number; price_cents: number; stock: number };
 
 function CatalogPage() {

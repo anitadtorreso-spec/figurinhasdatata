@@ -157,51 +157,45 @@ function CatalogPage() {
                     const qty = cart[s.id] ?? 0;
                     const out = s.stock <= 0;
                     return (
-                      <button
+                      <div
                         key={s.id}
-                        disabled={out}
+                        role="button"
+                        tabIndex={out ? -1 : 0}
+                        aria-disabled={out}
                         onClick={() => !out && changeQty(s.id, 1, s.stock)}
+                        onKeyDown={(e) => { if (!out && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); changeQty(s.id, 1, s.stock); } }}
                         className={
-                          "group relative aspect-[3/4] overflow-hidden rounded-lg border text-left transition " +
+                          "group relative aspect-[3/4] overflow-hidden rounded-lg border text-left transition select-none " +
                           (out
                             ? "cursor-not-allowed border-dashed bg-muted text-muted-foreground"
                             : qty > 0
-                            ? "border-primary bg-primary text-primary-foreground shadow-card"
-                            : "border-border bg-card hover:border-primary/60 hover:shadow-card")
+                            ? "cursor-pointer border-primary bg-primary text-primary-foreground shadow-card"
+                            : "cursor-pointer border-border bg-card hover:border-primary/60 hover:shadow-card")
                         }
                       >
                         <div className="flex h-full flex-col justify-between p-2">
                           <div className="flex items-start justify-between">
-                            <span className="text-[10px] font-semibold uppercase tracking-widest opacity-70">
-                              {team.code}
-                            </span>
+                            <span className="text-[10px] font-semibold uppercase tracking-widest opacity-70">{team.code}</span>
                             {qty > 0 && <Check className="h-3.5 w-3.5" />}
                           </div>
-                          <div style={{ fontFamily: "var(--font-display)" }} className="text-3xl leading-none">
-                            {s.number}
-                          </div>
+                          <div style={{ fontFamily: "var(--font-display)" }} className="text-3xl leading-none">{s.number}</div>
                           <div className="flex items-end justify-between text-[10px]">
                             <span className="opacity-70">{formatBRL(s.price_cents)}</span>
-                            <span className="opacity-70">
-                              {out ? "esgotada" : `${s.stock} un`}
-                            </span>
+                            <span className="opacity-70">{out ? "esgotada" : `${s.stock} un`}</span>
                           </div>
                         </div>
                         {qty > 0 && (
-                          <div
-                            className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-background/95 px-1 py-0.5 text-foreground"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button onClick={(e) => { e.stopPropagation(); changeQty(s.id, -1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
+                          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-background/95 px-1 py-0.5 text-foreground" onClick={(e) => e.stopPropagation()}>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, -1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
                               <Minus className="h-3 w-3" />
                             </button>
                             <span className="text-xs font-bold">{qty}</span>
-                            <button onClick={(e) => { e.stopPropagation(); changeQty(s.id, 1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
+                            <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, 1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
                               <Plus className="h-3 w-3" />
                             </button>
                           </div>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

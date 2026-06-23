@@ -9,8 +9,8 @@ export function SiteHeader({ children }: { children?: React.ReactNode }) {
             <span className="text-xl">⚽</span>
           </div>
           <div className="leading-tight">
-            <div style={{ fontFamily: "var(--font-display)" }} className="text-xl tracking-wide">FIGURINHAS DA COPA</div>
-            <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Catálogo & Pedidos</div>
+            <div style={{ fontFamily: "var(--font-display)" }} className="text-xl tracking-wide">FIGURINHAS DA TATÁ</div>
+            <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Copa 2026 · Catálogo & Pedidos</div>
           </div>
         </Link>
         <div className="flex items-center gap-2">{children}</div>

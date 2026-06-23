@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Team = { id: string; code: string; name: string; flag: string; sort_order: number };
+type Team = { id: string; code: string; name: string; flag: string; sort_order: number; group_label: string | null };
 type Sticker = { id: string; team_id: string; number: number; price_cents: number; stock: number };
 type Order = { id: string; customer_name: string; customer_contact: string; note: string | null; status: "pending" | "confirmed" | "cancelled"; total_cents: number; created_at: string };
 type OrderItem = { id: string; order_id: string; sticker_id: string; quantity: number; unit_price_cents: number };

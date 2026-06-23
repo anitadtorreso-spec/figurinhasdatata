@@ -178,7 +178,7 @@ function CatalogPage() {
                             <span className="text-[10px] font-semibold uppercase tracking-widest opacity-70">{team.code}</span>
                             {qty > 0 && <Check className="h-3.5 w-3.5" />}
                           </div>
-                          <div style={{ fontFamily: "var(--font-display)" }} className="text-3xl leading-none">{s.number}</div>
+                          <div style={{ fontFamily: "var(--font-display)" }} className="text-3xl leading-none">{String(s.number).padStart(2, "0")}</div>
                           <div className="flex items-end justify-between text-[10px]">
                             <span className="opacity-70">{formatBRL(s.price_cents)}</span>
                             <span className="opacity-70">{out ? "esgotada" : `${s.stock} un`}</span>

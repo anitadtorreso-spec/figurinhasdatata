@@ -132,6 +132,7 @@ export type Database = {
           code: string
           created_at: string
           flag: string
+          group_label: string | null
           id: string
           name: string
           sort_order: number
@@ -140,6 +141,7 @@ export type Database = {
           code: string
           created_at?: string
           flag?: string
+          group_label?: string | null
           id?: string
           name: string
           sort_order?: number
@@ -148,6 +150,7 @@ export type Database = {
           code?: string
           created_at?: string
           flag?: string
+          group_label?: string | null
           id?: string
           name?: string
           sort_order?: number

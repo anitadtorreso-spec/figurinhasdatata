@@ -15,8 +15,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Catálogo de Figurinhas da Copa" },
-      { name: "description", content: "Veja as figurinhas disponíveis, selecione as que faltam no seu álbum e envie o pedido." },
+      { title: "Figurinhas da Tatá — Catálogo da Copa 2026" },
+      { name: "description", content: "Veja as figurinhas disponíveis na Tatá, selecione as que faltam no seu álbum da Copa 2026 e envie o pedido." },
     ],
   }),
   component: CatalogPage,

@@ -332,7 +332,7 @@ function StockPanel() {
 
   const adjust = useMutation({
     mutationFn: async ({ id, stock, price_cents }: { id: string; stock?: number; price_cents?: number }) => {
-      const patch: Record<string, number> = {};
+      const patch: { stock?: number; price_cents?: number } = {};
       if (stock !== undefined) patch.stock = Math.max(0, stock);
       if (price_cents !== undefined) patch.price_cents = Math.max(0, price_cents);
       const { error } = await supabase.from("stickers").update(patch).eq("id", id);

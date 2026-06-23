@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Check, Search } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Check, Search, ArrowLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
 import { SiteHeader } from "@/components/SiteHeader";

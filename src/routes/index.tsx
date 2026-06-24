@@ -102,6 +102,46 @@ function CatalogPage() {
     });
   }
 
+  function addFromList() {
+    if (!selectedTeamId) return;
+    const nums = listInput
+      .split(/\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0)
+      .map((l) => parseInt(l, 10))
+      .filter((n) => !isNaN(n) && n > 0);
+
+    if (nums.length === 0) {
+      toast.error("Cole uma lista de números válidos.");
+      return;
+    }
+
+    const teamStickers = stickersByTeam.get(selectedTeamId) ?? [];
+    let added = 0;
+    let skipped = 0;
+
+    setCart((prev) => {
+      const next = { ...prev };
+      for (const n of nums) {
+        const s = teamStickers.find((x) => x.number === n);
+        if (!s) { skipped++; continue; }
+        if (s.stock <= 0) { skipped++; continue; }
+        const cur = next[s.id] ?? 0;
+        if (cur >= s.stock) { skipped++; continue; }
+        next[s.id] = cur + 1;
+        added++;
+      }
+      return next;
+    });
+
+    setListInput("");
+    if (added > 0) {
+      toast.success(`${added} figurinha(s) adicionada(s) ao pedido.`, { description: skipped > 0 ? `${skipped} não encontrada(s) ou sem estoque.` : undefined });
+    } else {
+      toast.error("Nenhuma figurinha foi adicionada.", { description: "Verifique os números e o estoque disponível." });
+    }
+  }
+
   const selectedTeam = selectedTeamId ? teams.find((t) => t.id === selectedTeamId) : null;
   const selectedStickers = selectedTeamId ? stickersByTeam.get(selectedTeamId) ?? [] : [];
   const selectedCartQty = selectedStickers.reduce((sum, s) => sum + (cart[s.id] ?? 0), 0);

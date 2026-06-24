@@ -300,6 +300,36 @@ function CatalogPage() {
   );
 }
 
+const WHATSAPP_NUMBER = "5531975173431";
+
+function buildWhatsAppMessage(
+  items: { sticker: Sticker; team?: Team; quantity: number }[],
+  totalCents: number,
+) {
+  const lines: string[] = [];
+  lines.push("Olá Tatá! Quero estas figurinhas da Copa 2026:");
+  lines.push("");
+  const byTeam = new Map<string, { team?: Team; items: { sticker: Sticker; quantity: number }[] }>();
+  for (const i of items) {
+    const key = i.team?.id ?? i.sticker.team_id;
+    if (!byTeam.has(key)) byTeam.set(key, { team: i.team, items: [] });
+    byTeam.get(key)!.items.push({ sticker: i.sticker, quantity: i.quantity });
+  }
+  for (const { team, items: list } of byTeam.values()) {
+    list.sort((a, b) => a.sticker.number - b.sticker.number);
+    const header = `${team?.flag ?? ""} ${team?.name ?? ""} (${team?.code ?? ""})`.trim();
+    lines.push(`*${header}*`);
+    for (const { sticker, quantity } of list) {
+      const num = String(sticker.number).padStart(2, "0");
+      lines.push(`• #${num} — ${quantity}x (${formatBRL(sticker.price_cents)})`);
+    }
+    lines.push("");
+  }
+  const totalQty = items.reduce((s, i) => s + i.quantity, 0);
+  lines.push(`*Total:* ${totalQty} figurinha(s) — ${formatBRL(totalCents)}`);
+  return lines.join("\n");
+}
+
 function CartSheet({
   items,
   totalCents,
@@ -313,56 +343,17 @@ function CartSheet({
   onClear: () => void;
   onDone: () => void;
 }) {
-  const qc = useQueryClient();
-  const [name, setName] = useState("");
-  const [contact, setContact] = useState("");
-  const [note, setNote] = useState("");
-  const [submitted, setSubmitted] = useState<string | null>(null);
-
-  const submit = useMutation({
-    mutationFn: async () => {
-      if (!name.trim() || !contact.trim()) throw new Error("Preencha nome e contato.");
-      if (items.length === 0) throw new Error("Selecione ao menos uma figurinha.");
-      const { data: order, error: oErr } = await supabase
-        .from("orders")
-        .insert({ customer_name: name.trim(), customer_contact: contact.trim(), note: note.trim() || null, total_cents: totalCents })
-        .select()
-        .single();
-      if (oErr) throw oErr;
-      const payload = items.map((i) => ({
-        order_id: order.id,
-        sticker_id: i.sticker.id,
-        quantity: i.quantity,
-        unit_price_cents: i.sticker.price_cents,
-      }));
-      const { error: iErr } = await supabase.from("order_items").insert(payload);
-      if (iErr) throw iErr;
-      return order.id as string;
-    },
-    onSuccess: (id) => {
-      toast.success("Pedido enviado!");
-      setSubmitted(id);
-      onClear();
-      qc.invalidateQueries({ queryKey: ["orders"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  if (submitted) {
-    return (
-      <SheetContent className="flex flex-col">
-        <SheetHeader>
-          <SheetTitle>Pedido enviado ✅</SheetTitle>
-        </SheetHeader>
-        <div className="mt-6 space-y-3 text-sm">
-          <p>Recebemos sua seleção. Em breve entraremos em contato para confirmar.</p>
-          <p className="rounded-md bg-muted p-3 font-mono text-xs">Código: {submitted.slice(0, 8)}</p>
-        </div>
-        <SheetFooter className="mt-auto">
-          <Button onClick={() => { setSubmitted(null); onDone(); }}>Voltar ao catálogo</Button>
-        </SheetFooter>
-      </SheetContent>
-    );
+  function sendToWhatsApp() {
+    if (items.length === 0) {
+      toast.error("Selecione ao menos uma figurinha.");
+      return;
+    }
+    const msg = buildWhatsAppMessage(items, totalCents);
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    toast.success("Abrindo o WhatsApp...");
+    onClear();
+    onDone();
   }
 
   return (
@@ -405,24 +396,10 @@ function CartSheet({
             <span className="text-muted-foreground">Total ({items.reduce((s, i) => s + i.quantity, 0)} figurinhas)</span>
             <span className="text-lg font-bold">{formatBRL(totalCents)}</span>
           </div>
-          <div className="space-y-2">
-            <div>
-              <Label htmlFor="name">Nome *</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" maxLength={100} />
-            </div>
-            <div>
-              <Label htmlFor="contact">WhatsApp ou e-mail *</Label>
-              <Input id="contact" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="(11) 99999-9999" maxLength={120} />
-            </div>
-            <div>
-              <Label htmlFor="note">Observação</Label>
-              <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Opcional" maxLength={400} />
-            </div>
-          </div>
-          <Button onClick={() => submit.mutate()} disabled={submit.isPending} className="w-full" size="lg">
-            {submit.isPending ? "Enviando..." : "Enviar pedido"}
+          <Button onClick={sendToWhatsApp} className="w-full" size="lg">
+            Enviar pedido pelo WhatsApp
           </Button>
-          <p className="text-center text-xs text-muted-foreground">Pagamento combinado depois de confirmar a disponibilidade.</p>
+          <p className="text-center text-xs text-muted-foreground">Você será levado ao WhatsApp da Tatá com a lista pronta para enviar.</p>
         </div>
       )}
     </SheetContent>

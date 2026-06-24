@@ -48,6 +48,7 @@ function CatalogPage() {
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [listInput, setListInput] = useState("");
 
   const stickersByTeam = useMemo(() => {
     const m = new Map<string, Sticker[]>();

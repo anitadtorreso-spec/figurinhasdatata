@@ -409,17 +409,43 @@ function StockPanel() {
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-10">
                 {list.map((s) => (
                   <div key={s.id} className="rounded-md border bg-card p-2 text-center">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">#{s.number}</div>
-                    <Input
-                      type="number"
-                      defaultValue={s.stock}
-                      key={`stock-${s.id}-${s.stock}`}
-                      onBlur={(e) => {
-                        const v = Number(e.target.value);
-                        if (v !== s.stock) adjust.mutate({ id: s.id, stock: v });
-                      }}
-                      className="mt-1 h-8 text-center text-sm"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => adjust.mutate({ id: s.id, stock: s.stock + 1 })}
+                      className="w-full text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground cursor-pointer"
+                      title="Clique para adicionar 1 ao estoque"
+                    >
+                      #{s.number}
+                    </button>
+                    <div className="mt-1 flex items-center gap-1">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => adjust.mutate({ id: s.id, stock: Math.max(0, s.stock - 1) })}
+                        disabled={s.stock <= 0}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <Input
+                        type="number"
+                        defaultValue={s.stock}
+                        key={`stock-${s.id}-${s.stock}`}
+                        onBlur={(e) => {
+                          const v = Number(e.target.value);
+                          if (v !== s.stock) adjust.mutate({ id: s.id, stock: v });
+                        }}
+                        className="h-7 px-1 text-center text-sm"
+                      />
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => adjust.mutate({ id: s.id, stock: s.stock + 1 })}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
                     <Input
                       type="number"
                       step="0.01"
@@ -433,6 +459,7 @@ function StockPanel() {
                     />
                   </div>
                 ))}
+
               </div>
             </CardContent>
           </Card>

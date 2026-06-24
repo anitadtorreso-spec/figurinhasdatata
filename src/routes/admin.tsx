@@ -429,11 +429,10 @@ function StockPanel() {
                       </Button>
                       <Input
                         type="number"
-                        defaultValue={s.stock}
-                        key={`stock-${s.id}-${s.stock}`}
-                        onBlur={(e) => {
+                        value={s.stock}
+                        onChange={(e) => {
                           const v = Number(e.target.value);
-                          if (v !== s.stock) adjust.mutate({ id: s.id, stock: v });
+                          if (!isNaN(v)) adjust.mutate({ id: s.id, stock: v });
                         }}
                         className="h-7 px-1 text-center text-sm"
                       />

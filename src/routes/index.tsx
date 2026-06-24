@@ -316,10 +316,14 @@ function CatalogPage() {
                         : "cursor-pointer border-border bg-card hover:border-primary/60 hover:shadow-card")
                     }
                   >
-                    <div className="flex h-full flex-col justify-between p-2">
+                    <div className={"flex h-full flex-col justify-between p-2 " + (qty > 0 ? "pb-8" : "")}>
                       <div className="flex items-start justify-between">
                         <span className="text-[10px] font-semibold uppercase tracking-widest opacity-70">{selectedTeam.code}</span>
-                        {qty > 0 && <Check className="h-3.5 w-3.5" />}
+                        {qty > 0 && (
+                          <span className="grid h-5 min-w-5 place-items-center rounded-full bg-background/90 px-1 text-[10px] font-bold text-foreground">
+                            {qty}
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontFamily: "var(--font-display)" }} className="text-3xl leading-none">{String(s.number).padStart(2, "0")}</div>
                       <div className="flex items-end justify-between text-[10px]">
@@ -328,12 +332,12 @@ function CatalogPage() {
                       </div>
                     </div>
                     {qty > 0 && (
-                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-background/95 px-1 py-0.5 text-foreground" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, -1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
+                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between border-t border-primary-foreground/20 bg-primary px-1 py-0.5 text-primary-foreground" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, -1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-primary-foreground/20">
                           <Minus className="h-3 w-3" />
                         </button>
                         <span className="text-xs font-bold">{qty}</span>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, 1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-muted">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); changeQty(s.id, 1, s.stock); }} className="grid h-6 w-6 place-items-center rounded hover:bg-primary-foreground/20">
                           <Plus className="h-3 w-3" />
                         </button>
                       </div>

@@ -277,6 +277,24 @@ function CatalogPage() {
 
             <p className="mt-4 text-xs text-muted-foreground">Toque em uma figurinha para adicionar ao pedido.</p>
 
+            <div className="mt-4 rounded-xl border bg-card p-3 shadow-sm">
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                <List className="h-3.5 w-3.5" />
+                Adicionar por lista
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">Cole os números das figurinhas desejadas (uma por linha):</p>
+              <Textarea
+                value={listInput}
+                onChange={(e) => setListInput(e.target.value)}
+                placeholder={`1\n2\n5`}
+                className="mt-2 min-h-[80px] text-sm"
+              />
+              <Button onClick={addFromList} size="sm" className="mt-2 w-full">
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                Adicionar ao pedido
+              </Button>
+            </div>
+
             <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10">
               {selectedStickers.map((s) => {
                 const qty = cart[s.id] ?? 0;

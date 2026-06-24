@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Search, ArrowLeft, ChevronRight, List, Send } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ShoppingCart, Minus, Plus, Check, Search, ArrowLeft, ChevronRight, List } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -330,9 +328,7 @@ function CatalogPage() {
                       <div style={{ fontFamily: "var(--font-display)" }} className="text-3xl leading-none">{String(s.number).padStart(2, "0")}</div>
                       <div className="flex items-end justify-between text-[10px]">
                         <span className="opacity-70">{formatBRL(s.price_cents)}</span>
-                        <span className={out ? "opacity-70 text-destructive font-medium" : "opacity-70"}>
-                          {out ? "esgotada" : `${s.stock} un`}
-                        </span>
+                        <span className="opacity-70">{out ? "esgotada" : `${s.stock} un`}</span>
                       </div>
                     </div>
                     {qty > 0 && (
@@ -371,10 +367,9 @@ const WHATSAPP_NUMBER = "5531975173431";
 function buildWhatsAppMessage(
   items: { sticker: Sticker; team?: Team; quantity: number }[],
   totalCents: number,
-  customerName: string,
 ) {
   const lines: string[] = [];
-  lines.push(`Olá Tatá! Sou ${customerName} e quero estas figurinhas da Copa 2026:`);
+  lines.push("Olá Tatá! Quero estas figurinhas da Copa 2026:");
   lines.push("");
   const byTeam = new Map<string, { team?: Team; items: { sticker: Sticker; quantity: number }[] }>();
   for (const i of items) {
@@ -410,200 +405,65 @@ function CartSheet({
   onClear: () => void;
   onDone: () => void;
 }) {
-  const [showCheckout, setShowCheckout] = useState(false);
-
-  function handleEnviar() {
+  function sendToWhatsApp() {
     if (items.length === 0) {
       toast.error("Selecione ao menos uma figurinha.");
       return;
     }
-    setShowCheckout(true);
+    const msg = buildWhatsAppMessage(items, totalCents);
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    toast.success("Abrindo o WhatsApp...");
+    onClear();
+    onDone();
   }
 
   return (
-    <>
-      <SheetContent className="flex w-full flex-col sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>Meu pedido</SheetTitle>
-        </SheetHeader>
+    <SheetContent className="flex w-full flex-col sm:max-w-md">
+      <SheetHeader>
+        <SheetTitle>Meu pedido</SheetTitle>
+      </SheetHeader>
 
-        <div className="-mx-6 flex-1 overflow-y-auto px-6">
-          {items.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma figurinha selecionada ainda.</p>
-          ) : (
-            <ul className="divide-y">
-              {items.map((i) => (
-                <li key={i.sticker.id} className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold">
-                      {i.team?.flag} {i.team?.code} #{i.sticker.number}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{formatBRL(i.sticker.price_cents)} · estoque {i.sticker.stock}</div>
+      <div className="-mx-6 flex-1 overflow-y-auto px-6">
+        {items.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma figurinha selecionada ainda.</p>
+        ) : (
+          <ul className="divide-y">
+            {items.map((i) => (
+              <li key={i.sticker.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold">
+                    {i.team?.flag} {i.team?.code} #{i.sticker.number}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => onChange(i.sticker.id, -1, i.sticker.stock)} className="grid h-7 w-7 place-items-center rounded border hover:bg-muted">
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <span className="w-6 text-center text-sm font-bold">{i.quantity}</span>
-                    <button onClick={() => onChange(i.sticker.id, 1, i.sticker.stock)} className="grid h-7 w-7 place-items-center rounded border hover:bg-muted">
-                      <Plus className="h-3 w-3" />
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {items.length > 0 && (
-          <div className="space-y-3 border-t pt-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total ({items.reduce((s, i) => s + i.quantity, 0)} figurinhas)</span>
-              <span className="text-lg font-bold">{formatBRL(totalCents)}</span>
-            </div>
-            <Button onClick={handleEnviar} className="w-full" size="lg">
-              <Send className="mr-2 h-4 w-4" />
-              Finalizar pedido
-            </Button>
-            <p className="text-center text-xs text-muted-foreground">Informe seu nome e contato para registrar o pedido antes de enviar pelo WhatsApp.</p>
-          </div>
+                  <div className="text-xs text-muted-foreground">{formatBRL(i.sticker.price_cents)} · estoque {i.sticker.stock}</div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => onChange(i.sticker.id, -1, i.sticker.stock)} className="grid h-7 w-7 place-items-center rounded border hover:bg-muted">
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className="w-6 text-center text-sm font-bold">{i.quantity}</span>
+                  <button onClick={() => onChange(i.sticker.id, 1, i.sticker.stock)} className="grid h-7 w-7 place-items-center rounded border hover:bg-muted">
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
-      </SheetContent>
+      </div>
 
-      <CheckoutDialog
-        open={showCheckout}
-        items={items}
-        totalCents={totalCents}
-        onClose={() => setShowCheckout(false)}
-        onSuccess={() => {
-          setShowCheckout(false);
-          onClear();
-          onDone();
-        }}
-      />
-    </>
-  );
-}
-
-function CheckoutDialog({
-  open,
-  items,
-  totalCents,
-  onClose,
-  onSuccess,
-}: {
-  open: boolean;
-  items: { sticker: Sticker; team?: Team; quantity: number }[];
-  totalCents: number;
-  onClose: () => void;
-  onSuccess: () => void;
-}) {
-  const [name, setName] = useState("");
-  const [contact, setContact] = useState("");
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function handleSubmit() {
-    if (!name.trim()) { toast.error("Informe seu nome."); return; }
-    if (!contact.trim()) { toast.error("Informe seu WhatsApp ou contato."); return; }
-
-    setBusy(true);
-    try {
-      const { data: order, error: orderErr } = await supabase
-        .from("orders")
-        .insert({
-          customer_name: name.trim(),
-          customer_contact: contact.trim(),
-          note: note.trim() || null,
-          total_cents: totalCents,
-          status: "pending",
-        })
-        .select()
-        .single();
-
-      if (orderErr) throw orderErr;
-
-      const orderItems = items.map((i) => ({
-        order_id: order.id,
-        sticker_id: i.sticker.id,
-        quantity: i.quantity,
-        unit_price_cents: i.sticker.price_cents,
-      }));
-
-      const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
-      if (itemsErr) throw itemsErr;
-
-      const msg = buildWhatsAppMessage(items, totalCents, name.trim());
-      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-
-      toast.success("Pedido registrado! Abrindo o WhatsApp...");
-      onSuccess();
-    } catch (err) {
-      toast.error("Erro ao registrar o pedido: " + (err as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Finalizar pedido</DialogTitle>
-          <DialogDescription>
-            Preencha seus dados para registrar o orçamento. Depois você será levado ao WhatsApp da Tatá com a lista pronta.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3 pt-2">
-          <div>
-            <Label htmlFor="checkout-name">Seu nome *</Label>
-            <Input
-              id="checkout-name"
-              placeholder="Ex: Maria Silva"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={busy}
-            />
+      {items.length > 0 && (
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Total ({items.reduce((s, i) => s + i.quantity, 0)} figurinhas)</span>
+            <span className="text-lg font-bold">{formatBRL(totalCents)}</span>
           </div>
-          <div>
-            <Label htmlFor="checkout-contact">Seu WhatsApp *</Label>
-            <Input
-              id="checkout-contact"
-              placeholder="Ex: (31) 99999-0000"
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-              disabled={busy}
-            />
-          </div>
-          <div>
-            <Label htmlFor="checkout-note">Observação (opcional)</Label>
-            <Textarea
-              id="checkout-note"
-              placeholder="Ex: Quero retirar na quinta-feira"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              disabled={busy}
-              className="min-h-[70px]"
-            />
-          </div>
-
-          <div className="rounded-lg bg-muted p-3 text-sm">
-            <div className="font-semibold">Resumo do pedido</div>
-            <div className="text-muted-foreground">{items.reduce((s, i) => s + i.quantity, 0)} figurinha(s) · {formatBRL(totalCents)}</div>
-          </div>
-
-          <Button onClick={handleSubmit} disabled={busy} className="w-full" size="lg">
-            {busy ? "Registrando..." : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Registrar e enviar pelo WhatsApp
-              </>
-            )}
+          <Button onClick={sendToWhatsApp} className="w-full" size="lg">
+            Enviar pedido pelo WhatsApp
           </Button>
+          <p className="text-center text-xs text-muted-foreground">Você será levado ao WhatsApp da Tatá com a lista pronta para enviar.</p>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </SheetContent>
   );
 }

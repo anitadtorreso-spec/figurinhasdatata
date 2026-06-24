@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Check, Search, ArrowLeft, ChevronRight } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Check, Search, ArrowLeft, ChevronRight, List } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -47,6 +48,7 @@ function CatalogPage() {
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [listInput, setListInput] = useState("");
 
   const stickersByTeam = useMemo(() => {
     const m = new Map<string, Sticker[]>();
@@ -98,6 +100,46 @@ function CatalogPage() {
       const next = Math.max(0, Math.min(stock, cur + delta));
       return { ...c, [stickerId]: next };
     });
+  }
+
+  function addFromList() {
+    if (!selectedTeamId) return;
+    const nums = listInput
+      .split(/\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0)
+      .map((l) => parseInt(l, 10))
+      .filter((n) => !isNaN(n) && n > 0);
+
+    if (nums.length === 0) {
+      toast.error("Cole uma lista de números válidos.");
+      return;
+    }
+
+    const teamStickers = stickersByTeam.get(selectedTeamId) ?? [];
+    let added = 0;
+    let skipped = 0;
+
+    setCart((prev) => {
+      const next = { ...prev };
+      for (const n of nums) {
+        const s = teamStickers.find((x) => x.number === n);
+        if (!s) { skipped++; continue; }
+        if (s.stock <= 0) { skipped++; continue; }
+        const cur = next[s.id] ?? 0;
+        if (cur >= s.stock) { skipped++; continue; }
+        next[s.id] = cur + 1;
+        added++;
+      }
+      return next;
+    });
+
+    setListInput("");
+    if (added > 0) {
+      toast.success(`${added} figurinha(s) adicionada(s) ao pedido.`, { description: skipped > 0 ? `${skipped} não encontrada(s) ou sem estoque.` : undefined });
+    } else {
+      toast.error("Nenhuma figurinha foi adicionada.", { description: "Verifique os números e o estoque disponível." });
+    }
   }
 
   const selectedTeam = selectedTeamId ? teams.find((t) => t.id === selectedTeamId) : null;
@@ -234,6 +276,24 @@ function CatalogPage() {
             </section>
 
             <p className="mt-4 text-xs text-muted-foreground">Toque em uma figurinha para adicionar ao pedido.</p>
+
+            <div className="mt-4 rounded-xl border bg-card p-3 shadow-sm">
+              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                <List className="h-3.5 w-3.5" />
+                Adicionar por lista
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">Cole os números das figurinhas desejadas (uma por linha):</p>
+              <Textarea
+                value={listInput}
+                onChange={(e) => setListInput(e.target.value)}
+                placeholder={`1\n2\n5`}
+                className="mt-2 min-h-[80px] text-sm"
+              />
+              <Button onClick={addFromList} size="sm" className="mt-2 w-full">
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                Adicionar ao pedido
+              </Button>
+            </div>
 
             <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10">
               {selectedStickers.map((s) => {
